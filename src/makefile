@@ -12,6 +12,7 @@ OBJ_DIR = ./obj
 $(TARGET): $(TARGET).o
 	@echo -n "Linking: $^\n"
 	$(CC) -o $@ $^ $(CFLAGS)
+	@echo "Link success: $@\n";
 
 .PHONY: clean
 
