@@ -16,4 +16,5 @@ $(TARGET): $(TARGET).o
 .PHONY: clean
 
 clean:
-	rm *.o $(OBJ_DIR)/*.o
+	[ -e *.o ] && rm *.o 
+	[ -e $(OBJ_DIR)/*.o ] && rm $(OBJ_DIR)/*.o
