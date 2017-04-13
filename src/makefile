@@ -16,5 +16,5 @@ $(TARGET): $(TARGET).o
 .PHONY: clean
 
 clean:
-	[ -e *.o ] && rm *.o 
-	[ -e $(OBJ_DIR)/*.o ] && rm $(OBJ_DIR)/*.o
+	rm -f ./*.o 2> /dev/null
+	rm -f $(OBJ_DIR)/*.o 2> /dev/null
