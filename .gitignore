@@ -27,3 +27,12 @@
 *.exe
 *.out
 *.app
+
+*.bak
+*.swp
+*.tar
+*.txt
+eigen-eigen-67e894c6cd8f/
+eigen-getting-started
+eigen-getting-started
+octave-workspace
