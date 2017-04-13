@@ -19,7 +19,7 @@ int main()
 	//Time samples
 	Eigen::VectorXf time = Eigen::VectorXf::LinSpaced(N, 0, duration);
 	std::cout << "\nNumber of time points: " << time.size() 
-			  << "[" << time(0) << ".." << time(time.size()-1) << "]\n";
+			  << " [" << time(0) << ".." << time(time.size()-1) << "]\n";
 
 	Eigen::VectorXf timeSignal(N);
 	for (unsigned i=0; i<N; ++i)
@@ -63,10 +63,10 @@ int main()
 
 		for (int i=0; i < freqDomain.size(); ++i)
 		{
-			fftStream << timeSignal(i) << '\t' << '\t' 
-					  << freqDomain(i) << '\t' << '\t' 
-					  << magnitude(i) << " : " 
-					  << magnitudeVec(i) << '\t' << '\t' 
+			fftStream << timeSignal(i) << "\t\t" 
+					  << freqDomain(i).real() << (freqDomain(i).imag() < 0 ? '-' : '+') << std::abs(freqDomain(i).imag()) << "i\t"
+					  << magnitude(i) << '\t' 
+					  << magnitudeVec(i) << "\t\t" 
 					  << psd(i) << '\n';
 		}
 
