@@ -1,7 +1,7 @@
 TARGET = eigen-getting-started
 CFLAGS = -Wall -std=c++11
 INCLUDES = \
-	#-I../eigen-eigen-67e894c6cd8f
+	-I../eigen-eigen-67e894c6cd8f
 
 CC = g++
 OBJ_DIR = ./obj

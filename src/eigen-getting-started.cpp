@@ -9,10 +9,10 @@ using namespace Eigen;
 
 int main()
 {
-	unsigned freqs[] = {1, 3, 5, 7, 9};
+	unsigned freqs[] = {1, 3, 5, 7, 9, 11, 13, 15};
 	unsigned duration = 1; //7sec DAQ duration
 	unsigned fs = 256;
-	const unsigned N = fs/freqs[0];
+	const unsigned N = fs/freqs[0]; //samples collected over one lowest freq cycle
 
 	Eigen::FFT<float> fft;
 
@@ -28,7 +28,10 @@ int main()
 						sin(2*M_PI*freqs[1]*time(i))/3 +
 						sin(2*M_PI*freqs[2]*time(i))/5 +
 						sin(2*M_PI*freqs[3]*time(i))/7 +
-						sin(2*M_PI*freqs[4]*time(i))/9;
+						sin(2*M_PI*freqs[4]*time(i))/9 + 
+						sin(2*M_PI*freqs[5]*time(i))/11 + 
+						sin(2*M_PI*freqs[6]*time(i))/13 + 
+						sin(2*M_PI*freqs[7]*time(i))/15;
 	}
 
 	//Calculate FFT
