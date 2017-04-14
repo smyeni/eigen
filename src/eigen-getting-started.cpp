@@ -14,7 +14,7 @@ int main()
 	unsigned fs = 256;
 	const unsigned N = fs/freqs[0]; //samples collected over one lowest freq cycle
 
-	Eigen::FFT<float> fft;
+	Eigen::FFT<float> fftCalc;
 
 	//Time samples
 	Eigen::VectorXf time = Eigen::VectorXf::LinSpaced(N, 0, duration);
@@ -35,20 +35,20 @@ int main()
 	}
 
 	//Calculate FFT
-	Eigen::VectorXcf freqDomain(N);
-	fft.fwd(freqDomain, timeSignal);
+	Eigen::VectorXcf fft(N);
+	fftCalc.fwd(fft, timeSignal);
 	
 	//Normalize FFT
-	freqDomain.normalize();
+	fft.normalize();
 
 	//PSD
 	Eigen::VectorXf magnitude(freqDomain.size());
-   	for (int k=0; k < freqDomain.size(); ++k)
+   	for (int k=0; k < fft.size(); ++k)
 	{
-		magnitude(k) = std::abs(freqDomain(k));
+		magnitude(k) = std::abs(fft(k));
 	}
 
-	Eigen::VectorXf magnitudeVec = freqDomain.array().abs();
+	Eigen::VectorXf magnitudeVec = fft.array().abs();
 
 	//PSD
 	auto psd = magnitudeVec.array().pow(2);
@@ -56,15 +56,15 @@ int main()
 	if (fftStream.is_open())
 	{
 		fftStream << "timeSignal" << '\t' << '\t' 
-				  << "freqDomain" << '\t' << '\t' 
+				  << "FFT" << '\t' << '\t' 
 				  << "magnitude" << '\t' << '\t' 
 				  << "magnitude2" << '\t' << '\t' 
 				  << "psd" << '\n';
 
-		for (int i=0; i < freqDomain.size(); ++i)
+		for (int i=0; i < fft.size(); ++i)
 		{
 			fftStream << timeSignal(i) << "\t\t" 
-					  << freqDomain(i).real() << (freqDomain(i).imag() < 0 ? '-' : '+') << std::abs(freqDomain(i).imag()) << "i\t"
+					  << fft(i).real() << (fft(i).imag() < 0 ? '-' : '+') << std::abs(fft(i).imag()) << "i\t"
 					  << magnitude(i) << '\t' 
 					  << magnitudeVec(i) << "\t\t" 
 					  << psd(i) << '\n';
