@@ -42,7 +42,7 @@ int main()
 	fft.normalize();
 
 	//PSD
-	Eigen::VectorXf magnitude(freqDomain.size());
+	Eigen::VectorXf magnitude(fft.size());
    	for (int k=0; k < fft.size(); ++k)
 	{
 		magnitude(k) = std::abs(fft(k));
