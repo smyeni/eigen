@@ -41,20 +41,10 @@ int main()
 	Eigen::VectorXcf fft(N);
 	fftCalc.fwd(fft, timeSignal);
 	
-	//Store FFT results in a vector
-	std::vector<FFToutput> fftStructs;
-	for (unsigned i = 0; i < fft.size(); ++i)
-	{
-		std::pair<unsigned, float> entry;
-		entry.first = i;
-		entry.second = std::abs(fft(i));
-		
-		fftStructs.push_back(entry);
-	}
 	//Normalize FFT
 	//fft.normalize();
 
-	//FFT magnitude
+	//Calculate FFT magnitude
 	Eigen::VectorXf fftMagnitude = fft.array().abs();
 
 	//PSD (magnitudeSquared)
@@ -83,19 +73,29 @@ int main()
 	}
 
 	//Half spectrum
-	std::vector<float> halfSpectrum;
+	std::vector<std::pair<unsigned, float>> fftPairs;
 	for (unsigned i=0; i < fftMagnitude.size()/2; ++i)
 	{
-		halfSpectrum.push_back(fftMagnitude(i));
+		std::pair<unsigned, float> entry;
+		entry.first = i;
+		entry.second = fftMagnitude(i);
+		fftPairs.push_back(entry);
 	}
 
 	//SORT by magnitude
-	std::sort(std::begin(halfSpectrum), std::end(halfSpectrum), [] (const FFToutput& a, const FFToutput b) -> bool {return a.magnitude > b.magnitude;});
+	std::sort(
+			std::begin(fftPairs), 
+			std::end(fftPairs), 
+			[] (const std::pair<unsigned, float>& a, const std::pair<unsigned, float> b) -> bool 
+				{ return a.second > b.second; }
+			);
+
+
+	//User output
 	std::cout << '\n';
-	//for (auto element : halfSpectrum)
 	for (unsigned i=0; i<freqs.size(); ++i)
 	{
-		std::cout << "[" << i << "] " << halfSpectrum[i] << '\n';
+		std::cout << "[" << fftPairs[i].first << "] " << fftPairs[i].second << '\n';
 	}
 
 	return 0;
