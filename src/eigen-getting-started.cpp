@@ -1,3 +1,5 @@
+#include <array>
+#include <algorithm>
 #include <complex>
 #include <fstream>
 #include <iostream>
@@ -9,7 +11,7 @@ using namespace Eigen;
 
 int main()
 {
-	unsigned freqs[] = {1, 3, 5, 7, 9, 11, 13, 15};
+	std::array<unsigned, 8> freqs = {{1, 3, 5, 7, 9, 11, 13, 15}};
 	unsigned duration = 1; //7sec DAQ duration
 	unsigned fs = 256;
 	const unsigned N = fs/freqs[0]; //samples collected over one lowest freq cycle
@@ -39,35 +41,27 @@ int main()
 	fftCalc.fwd(fft, timeSignal);
 	
 	//Normalize FFT
-	fft.normalize();
+	//fft.normalize();
 
-	//PSD
-	Eigen::VectorXf magnitude(fft.size());
-   	for (int k=0; k < fft.size(); ++k)
-	{
-		magnitude(k) = std::abs(fft(k));
-	}
+	//FFT magnitude
+	Eigen::VectorXf fftMagnitude = fft.array().abs();
 
-	Eigen::VectorXf magnitudeVec = fft.array().abs();
-
-	//PSD
-	auto psd = magnitudeVec.array().pow(2);
+	//PSD (magnitudeSquared)
+	auto magnitudeSquared = fftMagnitude.array().pow(2);
 	std::ofstream fftStream("fft.out", std::ios_base::out);
 	if (fftStream.is_open())
 	{
 		fftStream << "timeSignal" << '\t' << '\t' 
 				  << "FFT" << '\t' << '\t' 
-				  << "magnitude" << '\t' << '\t' 
-				  << "magnitude2" << '\t' << '\t' 
-				  << "psd" << '\n';
+				  << "fftMagnitude" << '\t' << '\t' 
+				  << "magnitudeSquared\n";
 
 		for (int i=0; i < fft.size(); ++i)
 		{
 			fftStream << timeSignal(i) << "\t\t" 
 					  << fft(i).real() << (fft(i).imag() < 0 ? '-' : '+') << std::abs(fft(i).imag()) << "i\t"
-					  << magnitude(i) << '\t' 
-					  << magnitudeVec(i) << "\t\t" 
-					  << psd(i) << '\n';
+					  << fftMagnitude(i) << '\t' 
+					  << magnitudeSquared(i) << '\n';
 		}
 
 		fftStream.close();
@@ -75,6 +69,22 @@ int main()
 	else
 	{
 		std::cout << "\nFailed to open output stream, no new FFT file\n";
+	}
+
+	//Half spectrum
+	std::vector<float> halfSpectrum;
+	for (unsigned i=0; i < fftMagnitude.size()/2; ++i)
+	{
+		halfSpectrum.push_back(fftMagnitude(i));
+	}
+
+	//SORT by magnitude & magnitudeSquared
+	std::sort(std::begin(halfSpectrum), std::end(halfSpectrum), [] (float a, float b) -> bool {return a>b;});
+	std::cout << '\n';
+	//for (auto element : halfSpectrum)
+	for (unsigned i=0; i<freqs.size(); ++i)
+	{
+		std::cout << "[" << i << "] " << halfSpectrum[i] << '\n';
 	}
 
 	return 0;
