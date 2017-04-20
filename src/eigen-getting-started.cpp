@@ -1,3 +1,4 @@
+#include <sstream>
 #include <array>
 #include <algorithm>
 #include <complex>
@@ -9,11 +10,12 @@
 using namespace std;
 using namespace Eigen;
 
-int main()
+int main(int argc, char * args[])
 {
-	std::array<unsigned, 8> freqs = {{1, 3, 5, 7, 9, 11, 13, 15}};
-	unsigned duration = 1; //7sec DAQ duration
-	unsigned fs = 256;
+	std::array<unsigned, 8> freqs = {{10, 30, 50, 70, 90, 110, 130, 150}};
+	float duration = 0.1; //7sec DAQ duration
+	unsigned fs;
+	(std::ostringstream ostr(args[1])) >> fs;
 	const unsigned N = fs/freqs[0]; //samples collected over one lowest freq cycle
 	float deltaFreq = fs/(N-1);
 	
@@ -73,19 +75,19 @@ int main()
 	}
 
 	//Half spectrum
-	std::vector<std::pair<unsigned, float>> fftPairs;
+	std::vector<std::pair<unsigned, float>> halfSpectrum;
 	for (unsigned i=0; i < fftMagnitude.size()/2; ++i)
 	{
 		std::pair<unsigned, float> entry;
 		entry.first = i;
 		entry.second = fftMagnitude(i);
-		fftPairs.push_back(entry);
+		halfSpectrum.push_back(entry);
 	}
 
 	//SORT by magnitude
 	std::sort(
-			std::begin(fftPairs), 
-			std::end(fftPairs), 
+			std::begin(halfSpectrum), 
+			std::end(halfSpectrum), 
 			[] (const std::pair<unsigned, float>& a, const std::pair<unsigned, float> b) -> bool 
 				{ return a.second > b.second; }
 			);
@@ -95,7 +97,9 @@ int main()
 	std::cout << '\n';
 	for (unsigned i=0; i<freqs.size(); ++i)
 	{
-		std::cout << "[" << fftPairs[i].first << "] " << fftPairs[i].second << '\n';
+		std::cout << "[" << halfSpectrum[i].first << "] " 
+			<< "Freq: " << (halfSpectrum[i].first)*deltaFreq << " Hz"
+			<< " Magnitude " << halfSpectrum[i].second << '\n';
 	}
 
 	return 0;
