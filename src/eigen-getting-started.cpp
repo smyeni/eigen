@@ -17,13 +17,6 @@ int main()
 	const unsigned N = fs/freqs[0]; //samples collected over one lowest freq cycle
 	deltaFreq = fs/(N-1);
 	
-	struct output
-	{
-		float freq;
-		unsigned index;
-		float amplitude;
-	};
-
 	Eigen::FFT<float> fftCalc;
 
 	//Time samples
@@ -48,6 +41,16 @@ int main()
 	Eigen::VectorXcf fft(N);
 	fftCalc.fwd(fft, timeSignal);
 	
+	//Store FFT results in a vector
+	std::vector<FFToutput> fftStructs;
+	for (unsigned i = 0; i < fft.size(); ++i)
+	{
+		std::pair<unsigned, float> entry;
+		entry.first = i;
+		entry.second = std::abs(fft(i));
+		
+		fftStructs.push_back(entry);
+	}
 	//Normalize FFT
 	//fft.normalize();
 
@@ -60,16 +63,16 @@ int main()
 	if (fftStream.is_open())
 	{
 		fftStream << "timeSignal" << '\t' << '\t' 
-				  << "FFT" << '\t' << '\t' 
-				  << "fftMagnitude" << '\t' << '\t' 
-				  << "magnitudeSquared\n";
+			  << "FFT" << '\t' << '\t' 
+			  << "fftMagnitude" << '\t' << '\t' 
+			  << "magnitudeSquared\n";
 
 		for (int i=0; i < fft.size(); ++i)
 		{
 			fftStream << timeSignal(i) << "\t\t" 
-					  << fft(i).real() << (fft(i).imag() < 0 ? '-' : '+') << std::abs(fft(i).imag()) << "i\t"
-					  << fftMagnitude(i) << '\t' 
-					  << magnitudeSquared(i) << '\n';
+				  << fft(i).real() << (fft(i).imag() < 0 ? '-' : '+') << std::abs(fft(i).imag()) << "i\t"
+				  << fftMagnitude(i) << '\t' 
+				  << magnitudeSquared(i) << '\n';
 		}
 
 		fftStream.close();
@@ -86,8 +89,8 @@ int main()
 		halfSpectrum.push_back(fftMagnitude(i));
 	}
 
-	//SORT by magnitude & magnitudeSquared
-	std::sort(std::begin(halfSpectrum), std::end(halfSpectrum), [] (float a, float b) -> bool {return a>b;});
+	//SORT by magnitude
+	std::sort(std::begin(halfSpectrum), std::end(halfSpectrum), [] (const FFToutput& a, const FFToutput b) -> bool {return a.magnitude > b.magnitude;});
 	std::cout << '\n';
 	//for (auto element : halfSpectrum)
 	for (unsigned i=0; i<freqs.size(); ++i)
