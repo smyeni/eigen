@@ -15,7 +15,7 @@ int main()
 	unsigned duration = 1; //7sec DAQ duration
 	unsigned fs = 256;
 	const unsigned N = fs/freqs[0]; //samples collected over one lowest freq cycle
-	deltaFreq = fs/(N-1);
+	float deltaFreq = fs/(N-1);
 	
 	Eigen::FFT<float> fftCalc;
 
