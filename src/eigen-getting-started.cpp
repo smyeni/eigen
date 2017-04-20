@@ -10,14 +10,27 @@
 using namespace std;
 using namespace Eigen;
 
-int main(int argc, char * args[])
+int main(int /*argc*/, char * args[])
 {
-	std::array<unsigned, 8> freqs = {{10, 30, 50, 70, 90, 110, 130, 150}};
-	float duration = 0.1; //7sec DAQ duration
+	std::array<unsigned, 8> freqs = {{1000, 3000, 5000, 7000, 9000, 11000, 13000, 15000}};
 	unsigned fs;
-	(std::ostringstream ostr(args[1])) >> fs;
-	const unsigned N = fs/freqs[0]; //samples collected over one lowest freq cycle
-	float deltaFreq = fs/(N-1);
+	unsigned N;
+	unsigned timespan;
+
+	std::stringstream str;
+	str <<	args[1] << " "  << args[2] << " " << args[3];
+	str >> std::scientific >> fs >> N >> timespan;
+
+	double duration = timespan/static_cast<double>(freqs[0]);
+
+	//Discrete frequency axis
+	float deltaFreq = static_cast<float>(fs)/(N-1);
+	Eigen::VectorXf freq = Eigen::VectorXf::LinSpaced(N, 0, fs);
+
+	std::cout << "\nSignal duration: " << std::scientific << duration
+			<< "\nSampling freq: " << fs << " Hz"
+			<< "\nN (num samples): " << N
+			<< "\nFreq spacing: " << deltaFreq << "Hz\n";
 	
 	Eigen::FFT<float> fftCalc;
 
@@ -54,14 +67,16 @@ int main(int argc, char * args[])
 	std::ofstream fftStream("fft.out", std::ios_base::out);
 	if (fftStream.is_open())
 	{
-		fftStream << "timeSignal" << '\t' << '\t' 
-			  << "FFT" << '\t' << '\t' 
-			  << "fftMagnitude" << '\t' << '\t' 
-			  << "magnitudeSquared\n";
+		fftStream	<< "timeSignal" << '\t' << '\t'
+					<< "Frequency\t"	
+					<< "FFT\t" 
+					<< "fftMagnitude\t"
+					<< "magnitudeSquared\n";
 
 		for (int i=0; i < fft.size(); ++i)
 		{
 			fftStream << timeSignal(i) << "\t\t" 
+				  << freq(i) << '\t'
 				  << fft(i).real() << (fft(i).imag() < 0 ? '-' : '+') << std::abs(fft(i).imag()) << "i\t"
 				  << fftMagnitude(i) << '\t' 
 				  << magnitudeSquared(i) << '\n';
@@ -98,7 +113,7 @@ int main(int argc, char * args[])
 	for (unsigned i=0; i<freqs.size(); ++i)
 	{
 		std::cout << "[" << halfSpectrum[i].first << "] " 
-			<< "Freq: " << (halfSpectrum[i].first)*deltaFreq << " Hz"
+			<< "Freq: " << std::fixed << (halfSpectrum[i].first)*deltaFreq << " Hz"
 			<< " Magnitude " << halfSpectrum[i].second << '\n';
 	}
 
