@@ -1,3 +1,6 @@
+#include <sstream>
+#include <array>
+#include <algorithm>
 #include <complex>
 #include <fstream>
 #include <iostream>
@@ -7,13 +10,28 @@
 using namespace std;
 using namespace Eigen;
 
-int main()
+int main(int /*argc*/, char * args[])
 {
-	unsigned freqs[] = {1, 3, 5, 7, 9, 11, 13, 15};
-	unsigned duration = 1; //7sec DAQ duration
-	unsigned fs = 256;
-	const unsigned N = fs/freqs[0]; //samples collected over one lowest freq cycle
+	std::array<unsigned, 8> freqs = {{1000, 3000, 5000, 7000, 9000, 11000, 13000, 15000}};
+	unsigned fs;
+	unsigned N;
+	unsigned timespan;
 
+	std::stringstream str;
+	str <<	args[1] << " "  << args[2] << " " << args[3];
+	str >> std::scientific >> fs >> N >> timespan;
+
+	double duration = timespan/static_cast<double>(freqs[0]);
+
+	//Discrete frequency axis
+	float deltaFreq = static_cast<float>(fs)/(N-1);
+	Eigen::VectorXf freq = Eigen::VectorXf::LinSpaced(N, 0, fs);
+
+	std::cout << "\nSignal duration: " << std::scientific << duration
+			<< "\nSampling freq: " << fs << " Hz"
+			<< "\nN (num samples): " << N
+			<< "\nFreq spacing: " << deltaFreq << "Hz\n";
+	
 	Eigen::FFT<float> fftCalc;
 
 	//Time samples
@@ -39,35 +57,29 @@ int main()
 	fftCalc.fwd(fft, timeSignal);
 	
 	//Normalize FFT
-	fft.normalize();
+	//fft.normalize();
 
-	//PSD
-	Eigen::VectorXf magnitude(fft.size());
-   	for (int k=0; k < fft.size(); ++k)
-	{
-		magnitude(k) = std::abs(fft(k));
-	}
+	//Calculate FFT magnitude
+	Eigen::VectorXf fftMagnitude = fft.array().abs();
 
-	Eigen::VectorXf magnitudeVec = fft.array().abs();
-
-	//PSD
-	auto psd = magnitudeVec.array().pow(2);
+	//PSD (magnitudeSquared)
+	auto magnitudeSquared = fftMagnitude.array().pow(2);
 	std::ofstream fftStream("fft.out", std::ios_base::out);
 	if (fftStream.is_open())
 	{
-		fftStream << "timeSignal" << '\t' << '\t' 
-				  << "FFT" << '\t' << '\t' 
-				  << "magnitude" << '\t' << '\t' 
-				  << "magnitude2" << '\t' << '\t' 
-				  << "psd" << '\n';
+		fftStream	<< "timeSignal" << '\t' << '\t'
+					<< "Frequency\t"	
+					<< "FFT\t" 
+					<< "fftMagnitude\t"
+					<< "magnitudeSquared\n";
 
 		for (int i=0; i < fft.size(); ++i)
 		{
 			fftStream << timeSignal(i) << "\t\t" 
-					  << fft(i).real() << (fft(i).imag() < 0 ? '-' : '+') << std::abs(fft(i).imag()) << "i\t"
-					  << magnitude(i) << '\t' 
-					  << magnitudeVec(i) << "\t\t" 
-					  << psd(i) << '\n';
+				  << freq(i) << '\t'
+				  << fft(i).real() << (fft(i).imag() < 0 ? '-' : '+') << std::abs(fft(i).imag()) << "i\t"
+				  << fftMagnitude(i) << '\t' 
+				  << magnitudeSquared(i) << '\n';
 		}
 
 		fftStream.close();
@@ -75,6 +87,34 @@ int main()
 	else
 	{
 		std::cout << "\nFailed to open output stream, no new FFT file\n";
+	}
+
+	//Half spectrum
+	std::vector<std::pair<unsigned, float>> halfSpectrum;
+	for (unsigned i=0; i < fftMagnitude.size()/2; ++i)
+	{
+		std::pair<unsigned, float> entry;
+		entry.first = i;
+		entry.second = fftMagnitude(i);
+		halfSpectrum.push_back(entry);
+	}
+
+	//SORT by magnitude
+	std::sort(
+			std::begin(halfSpectrum), 
+			std::end(halfSpectrum), 
+			[] (const std::pair<unsigned, float>& a, const std::pair<unsigned, float> b) -> bool 
+				{ return a.second > b.second; }
+			);
+
+
+	//User output
+	std::cout << '\n';
+	for (unsigned i=0; i<freqs.size(); ++i)
+	{
+		std::cout << "[" << halfSpectrum[i].first << "] " 
+			<< "Freq: " << std::fixed << (halfSpectrum[i].first)*deltaFreq << " Hz"
+			<< " Magnitude " << halfSpectrum[i].second << '\n';
 	}
 
 	return 0;
