@@ -115,7 +115,7 @@ int main(int argc, char * args[])
 	std::sort(
 			std::begin(halfSpectrum), 
 			std::end(halfSpectrum), 
-			[] (const std::pair<unsigned, float>& a, const std::pair<unsigned, float> b) -> bool 
+			[] (const std::pair<unsigned, float>& fft1, const std::pair<unsigned, float> fft2) -> bool 
 				{ return a.second > b.second; }
 			);
 
