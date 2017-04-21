@@ -10,32 +10,39 @@
 using namespace std;
 using namespace Eigen;
 
-int main(int /*argc*/, char * args[])
+int main(int argc, char * args[])
 {
-	std::array<unsigned, 8> freqs = {{1000, 3000, 5000, 7000, 9000, 11000, 13000, 15000}};
+	if (argc < 4)
+	{
+		std::cout << "\nSyntax error - usage: " << args[0] << " <sampling_freq> <num_samples> <fundamental_cycles>\n";
+		return 0;
+	}
+
+	std::array<double, 8> freqs = {{1000, 3000, 5000, 7000, 9000, 11000, 13000, 15000}};
 	unsigned fs;
 	unsigned N;
-	unsigned timespan;
+	unsigned acquisitionCycles;
 
 	std::stringstream str;
 	str <<	args[1] << " "  << args[2] << " " << args[3];
-	str >> std::scientific >> fs >> N >> timespan;
+	str >> std::scientific >> fs >> N >> acquisitionCycles;
 
-	double duration = timespan/static_cast<double>(freqs[0]);
+	double fundamentalPeriod = 1/freqs[0];
+	double signalDuration = acquisitionCycles * fundamentalPeriod;
 
 	//Discrete frequency axis
-	float deltaFreq = static_cast<float>(fs)/(N-1);
+	float freqGap = static_cast<float>(fs)/N;
 	Eigen::VectorXf freq = Eigen::VectorXf::LinSpaced(N, 0, fs);
 
-	std::cout << "\nSignal duration: " << std::scientific << duration
+	std::cout << "\nSignal duration: " << std::scientific << signalDuration << " sec"
 			<< "\nSampling freq: " << fs << " Hz"
 			<< "\nN (num samples): " << N
-			<< "\nFreq spacing: " << deltaFreq << "Hz\n";
+			<< "\nFreq spacing: " << freqGap << "Hz\n";
 	
 	Eigen::FFT<float> fftCalc;
 
 	//Time samples
-	Eigen::VectorXf time = Eigen::VectorXf::LinSpaced(N, 0, duration);
+	Eigen::VectorXf time = Eigen::VectorXf::LinSpaced(N, 0, signalDuration);
 	std::cout << "\nNumber of time points: " << time.size() 
 			  << " [" << time(0) << ".." << time(time.size()-1) << "]\n";
 
@@ -57,7 +64,7 @@ int main(int /*argc*/, char * args[])
 	fftCalc.fwd(fft, timeSignal);
 	
 	//Normalize FFT
-	//fft.normalize();
+	fft.normalize();
 
 	//Calculate FFT magnitude
 	Eigen::VectorXf fftMagnitude = fft.array().abs();
@@ -93,10 +100,15 @@ int main(int /*argc*/, char * args[])
 	std::vector<std::pair<unsigned, float>> halfSpectrum;
 	for (unsigned i=0; i < fftMagnitude.size()/2; ++i)
 	{
-		std::pair<unsigned, float> entry;
-		entry.first = i;
-		entry.second = fftMagnitude(i);
-		halfSpectrum.push_back(entry);
+		std::pair<unsigned, float> fftEntry;
+		fftEntry.first = i;
+		fftEntry.second = fftMagnitude(i);
+		halfSpectrum.push_back(fftEntry);
+
+		if (fftEntry.second > 0.6)
+		{
+			std::cout << "\nMax component: ["  << fftEntry.first << "," << fftEntry.second  << "]\n";
+		}
 	}
 
 	//SORT by magnitude
@@ -113,7 +125,7 @@ int main(int /*argc*/, char * args[])
 	for (unsigned i=0; i<freqs.size(); ++i)
 	{
 		std::cout << "[" << halfSpectrum[i].first << "] " 
-			<< "Freq: " << std::fixed << (halfSpectrum[i].first)*deltaFreq << " Hz"
+			<< "Freq: " << std::fixed << (halfSpectrum[i].first)*freqGap << " Hz"
 			<< " Magnitude " << halfSpectrum[i].second << '\n';
 	}
 
