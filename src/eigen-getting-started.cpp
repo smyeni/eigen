@@ -105,11 +105,6 @@ int main(int argc, char * args[])
 		fftEntry.first = i;
 		fftEntry.second = fftMagnitude(i);
 		halfSpectrum.push_back(fftEntry);
-
-		if (fftEntry.second > 0.6)
-		{
-			std::cout << "\nMax component: ["  << fftEntry.first << "," << fftEntry.second  << "]\n";
-		}
 	}
 
 	//SORT by magnitude
