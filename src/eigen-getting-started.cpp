@@ -1,9 +1,9 @@
-#include <sstream>
 #include <array>
-#include <algorithm>
+#include <sstream>
 #include <complex>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 #include <Eigen/Dense>
 #include <unsupported/Eigen/FFT>
 
@@ -12,9 +12,9 @@ using namespace Eigen;
 
 int main(int argc, char * args[])
 {
-	if (argc < 4)
+	if (argc < 3)
 	{
-		std::cout << "\nSyntax error - usage: " << args[0] << " <sampling_freq> <num_samples> <fundamental_cycles>\n";
+		std::cout << "\nSyntax error - usage: " << args[0] << " <samplingFreq> <acquisitionTime>\n";
 		return 0;
 	}
 
@@ -24,13 +24,14 @@ int main(int argc, char * args[])
 	unsigned acquisitionCycles;
 
 	std::stringstream str;
-	str <<	args[1] << " "  << args[2] << " " << args[3];
-	str >> std::scientific >> fs >> N >> acquisitionCycles;
+	str << args[1] << " " << args[2];
+	str >> std::scientific >> fs >> acquisitionCycles;
 
 	double fundamentalPeriod = 1/freqs[0];
 	double signalDuration = acquisitionCycles * fundamentalPeriod;
 
 	//Discrete frequency axis
+	N = fs * signalDuration;
 	float freqGap = static_cast<float>(fs)/N;
 	Eigen::VectorXf freq = Eigen::VectorXf::LinSpaced(N, 0, fs);
 
