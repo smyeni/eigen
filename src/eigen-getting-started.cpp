@@ -117,7 +117,7 @@ int main(int argc, char * args[])
 			std::begin(halfSpectrum), 
 			std::end(halfSpectrum), 
 			[] (const std::pair<unsigned, float>& fft1, const std::pair<unsigned, float> fft2) -> bool 
-				{ return a.second > b.second; }
+				{ return fft1.second > fft2.second; }
 			);
 
 
